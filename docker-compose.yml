@@ -1,0 +1,75 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: modern-library-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: modern_library
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: modern-library-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: modern_library
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - library-network
+    command: >
+      sh -c "
+        npm run migrate &&
+        npm run seed &&
+        npm start
+      "
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: modern-library-frontend
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    networks:
+      - library-network
+
+
+networks:
+  library-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local 

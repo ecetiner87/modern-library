@@ -1,0 +1,16 @@
+{
+  "short_name": "Modern Library",
+  "name": "Modern Library Management System",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4F46E5",
+  "background_color": "#ffffff",
+  "description": "A modern web application for managing your personal book collection"
+} 

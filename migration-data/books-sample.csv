@@ -1,0 +1,5 @@
+id,title,author_name,category_name,isbn,pages,publication_date,description,is_read,rating,language,date_added
+1,"Murder on the Orient Express","Agatha Christie","Mystery","9780007119318",256,"1934-01-01","A classic mystery novel featuring Hercule Poirot",true,5,"English","2023-01-15"
+2,"1984","George Orwell","Fiction","9780451524935",328,"1949-06-08","Dystopian social science fiction novel",true,5,"English","2023-01-20"
+3,"The Stranger","Albert Camus","Literature","9780679720201",123,"1942-01-01","Philosophical novel about absurdism",false,4,"English","2023-02-01"
+4,"Suç ve Ceza","Fyodor Dostoevsky","Literature","9789750719455",671,"1866-01-01","Psychological drama about guilt and redemption",true,5,"Turkish","2023-02-15" 
