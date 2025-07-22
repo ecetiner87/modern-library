@@ -2,7 +2,7 @@
 
 > A comprehensive web-based library management system built with modern technologies. Transform your personal library into a powerful, interactive digital experience!
 
-<!-- ![Dashboard Screenshot](docs/images/dashboard.png) -->
+![Dashboard Screenshot](docs/images/dashboard-overview.png)
 
 ## ✨ Key Features
 
@@ -56,17 +56,6 @@
 
 ## 🖼️ Screenshots
 
-> **📸 Screenshots Coming Soon!** 
-> 
-> We're preparing beautiful screenshots to showcase all the features. In the meantime, you can run the application locally to see it in action!
->
-> ```bash
-> npm start                    # Start backend
-> cd frontend && npm start    # Start frontend  
-> # Visit http://localhost:3000
-> ```
-
-<!-- 
 ### Dashboard Overview
 ![Dashboard](docs/images/dashboard-overview.png)
 *Smart dashboard with statistics, recent activity, and quick actions*
@@ -88,7 +77,7 @@
 *Visual category organization with progress tracking*
 
 ### Category Details
-![Category Details](docs/images/category-details.png)
+![Category Details](docs/images/categories-details.png)
 *Detailed view of books within specific categories*
 
 ### Reading History
@@ -106,7 +95,6 @@
 ### Statistics Dashboard
 ![Statistics](docs/images/statistics-dashboard.png)
 *Advanced analytics with interactive charts*
--->
 
 ## 🛠️ Technology Stack
 
