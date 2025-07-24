@@ -171,6 +171,45 @@
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001/api
 
+## 🚀 Production Deployment
+
+### Quick Production Setup
+
+For production deployment with Docker and PostgreSQL:
+
+```bash
+# 1. Setup production environment
+cp env.production.example .env.production
+# Edit .env.production with your secure values
+
+# 2. Run automated deployment
+./scripts/production-deploy.sh
+
+# 3. Access your production application
+# Frontend: http://localhost:3000
+# Backend: http://localhost:3001/api
+```
+
+### Apache Derby Migration
+
+To migrate your existing Apache Derby database:
+
+1. **Export Derby data to CSV:**
+   ```sql
+   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'BOOKS', 'books.csv', null, null, null);
+   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'AUTHORS', 'authors.csv', null, null, null);
+   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'CATEGORIES', 'categories.csv', null, null, null);
+   ```
+
+2. **Copy CSV files to migration-data/ folder**
+
+3. **Run migration:**
+   ```bash
+   docker-compose exec backend npm run migrate:derby
+   ```
+
+📖 **Detailed Guide:** See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for complete production setup instructions.
+
 ## 📁 Project Structure
 
 ```
