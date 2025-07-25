@@ -54,12 +54,12 @@ export const authorsApi = {
   getById: (id) => api.get(`/authors/${id}`),
   create: (data) => api.post('/authors', data),
   update: (id, data) => api.put(`/authors/${id}`, data),
-  delete: (id) => api.delete(`/authors/${id}`),
+  delete: (id) => api.delete(`/authors/${id}`)
 };
 
 // Categories API
 export const categoriesApi = {
-  getAll: () => api.get('/categories'),
+  getAll: (params = {}) => api.get('/categories', { params }),
   getDistribution: () => api.get('/categories/distribution'),
   getBooksByCategory: (id, params = {}) => api.get(`/categories/${id}/books`, { params }),
   getById: (id) => api.get(`/categories/${id}`),

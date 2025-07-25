@@ -12,42 +12,56 @@ router.get('/', async (req, res) => {
       uniqueAuthors,
       totalCategories,
       recentActivity,
-      wishlistStats
+      wishlistStats,
+      categoryStats,
+      readingActivity
     ] = await Promise.all([
       db('books').count('id as count').first(),
       db('books').where('is_read', true).count('id as count').first(),
-      db('books').where('is_borrowed', true).count('id as count').first(),
+      // Count from borrowed_books table instead of books.is_borrowed
+      db('borrowed_books').where('is_returned', false).count('id as count').first(),
       // Count unique authors from books table (using first_name + last_name)
-      db('books')
-        .whereNotNull('author_first_name')
-        .whereNotNull('author_last_name')
-        .select(db.raw("COUNT(DISTINCT (author_first_name || ' ' || author_last_name)) as count"))
-        .first(),
+      db.raw(`
+        SELECT COUNT(DISTINCT (author_first_name || ' ' || author_last_name)) as count
+        FROM books 
+        WHERE author_first_name IS NOT NULL 
+        AND author_last_name IS NOT NULL 
+        AND author_first_name != ''
+        AND author_last_name != ''
+      `).then(result => result.rows[0]),
       db('categories').count('id as count').first(),
       db('reading_history')
         .join('books', 'reading_history.book_id', 'books.id')
         .select(
           'books.title',
-          db.raw("(books.author_first_name || ' ' || books.author_last_name) as author_name"),
+          db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`),
           'reading_history.finish_date'
         )
-        .whereNotNull('books.author_first_name')
-        .whereNotNull('books.author_last_name'),
-      // Get wishlist stats from the dedicated wishlist table (SQLite boolean compatibility)
-      db('wishlist').where('is_purchased', 0).count('id as count').first()
+        .orderBy('reading_history.finish_date', 'desc')
+        .limit(5),
+      // Get wishlist stats (PostgreSQL boolean handling)
+      db('wishlist').where('is_purchased', false).count('id as count').first(),
+      // Category distribution for charts
+      db('categories')
+        .leftJoin('books', 'categories.id', 'books.category_id')
+        .select(
+          'categories.name',
+          'categories.color',
+          db.raw('COUNT(books.id) as book_count')
+        )
+        .groupBy('categories.id', 'categories.name', 'categories.color')
+        .havingRaw('COUNT(books.id) > 0')
+        .orderBy('book_count', 'desc'),
+      // Monthly reading activity for line chart
+      db('reading_history')
+        .select(
+          db.raw("DATE_TRUNC('month', finish_date) as month"),
+          db.raw('COUNT(*) as books_read')
+        )
+        .whereRaw("finish_date >= NOW() - INTERVAL '12 months'")
+        .groupBy(db.raw("DATE_TRUNC('month', finish_date)"))
+        .orderBy('month')
     ]);
-
-    // Sort recent activity chronologically (handle mixed date formats)
-    const sortedActivity = recentActivity
-      .map(item => ({
-        ...item,
-        sortDate: item.finish_date.toString().includes('-') 
-          ? new Date(item.finish_date)
-          : new Date(parseInt(item.finish_date))
-      }))
-      .sort((a, b) => b.sortDate - a.sortDate)
-      .slice(0, 5)
-      .map(({ sortDate, ...item }) => item); // Remove the temporary sortDate field
 
     res.json({
       overview: {
@@ -61,7 +75,16 @@ router.get('/', async (req, res) => {
           ? Math.round((readBooks.count / totalBooks.count) * 100) 
           : 0
       },
-      recent_activity: sortedActivity
+      recent_activity: recentActivity,
+      category_stats: categoryStats.map(stat => ({
+        name: stat.name,
+        value: parseInt(stat.book_count),
+        color: stat.color || '#8B5CF6'
+      })),
+      reading_activity: readingActivity.map(activity => ({
+        month: activity.month.toISOString().slice(0, 7), // Format as YYYY-MM
+        books_read: parseInt(activity.books_read)
+      }))
     });
   } catch (error) {
     console.error('Error fetching statistics:', error);
@@ -101,9 +124,14 @@ router.get('/reading-progress', async (req, res) => {
     
     // Process dates in JavaScript (handle mixed formats)
     const processedHistory = allHistory.map(item => {
-      const date = item.finish_date.toString().includes('-') 
-        ? new Date(item.finish_date)
-        : new Date(parseInt(item.finish_date));
+      let date;
+      if (typeof item.finish_date === 'string') {
+        date = new Date(item.finish_date);
+      } else if (typeof item.finish_date === 'number') {
+        date = new Date(item.finish_date);
+      } else {
+        date = item.finish_date;
+      }
       return {
         year: date.getFullYear(),
         month: date.getMonth() + 1
@@ -144,7 +172,7 @@ router.get('/top-authors', async (req, res) => {
       .select(
         db.raw("(author_first_name || ' ' || author_last_name) as name"),
         db.raw('COUNT(*) as book_count'),
-        db.raw('SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as books_read')
+        db.raw('SUM(CASE WHEN is_read = true THEN 1 ELSE 0 END) as books_read')
       )
       .whereNotNull('author_first_name')
       .whereNotNull('author_last_name')

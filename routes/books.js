@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 10, 
+      limit = 50, 
       search, 
       category, 
       author, 
@@ -22,11 +22,10 @@ router.get('/', async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = db('books')
-      .leftJoin('authors', 'books.author_id', 'authors.id')
       .leftJoin('categories', 'books.category_id', 'categories.id')
       .select(
         'books.*',
-        'authors.name as author_name',
+        db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`),
         'categories.name as category_name',
         'categories.color as category_color'
       );
@@ -35,7 +34,6 @@ router.get('/', async (req, res) => {
     if (search) {
       query = query.where(function() {
         this.where('books.title', 'like', `%${search}%`)
-            .orWhere('authors.name', 'like', `%${search}%`)
             .orWhere('books.description', 'like', `%${search}%`)
             .orWhere('books.author_first_name', 'like', `%${search}%`)
             .orWhere('books.author_last_name', 'like', `%${search}%`)
@@ -48,7 +46,12 @@ router.get('/', async (req, res) => {
     }
 
     if (author) {
-      query = query.where('books.author_id', author);
+      // Search by author name parts
+      query = query.where(function() {
+        this.where('books.author_first_name', 'like', `%${author}%`)
+            .orWhere('books.author_last_name', 'like', `%${author}%`)
+            .orWhere(db.raw(`(books.author_first_name || ' ' || books.author_last_name)`), 'like', `%${author}%`);
+      });
     }
 
     if (is_read !== undefined) {
@@ -92,11 +95,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const book = await db('books')
-      .leftJoin('authors', 'books.author_id', 'authors.id')
       .leftJoin('categories', 'books.category_id', 'categories.id')
       .select(
         'books.*',
-        'authors.name as author_name',
+        db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`),
         'categories.name as category_name',
         'categories.color as category_color'
       )

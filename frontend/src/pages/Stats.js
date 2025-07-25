@@ -86,15 +86,10 @@ const ChartCard = ({ title, children, className = "" }) => (
 export default function Stats() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // Fetch all statistics data
-  const { data: overview, isLoading: loadingOverview } = useQuery({
-    queryKey: ['stats-overview'],
+  // Fetch all statistics data from the main stats endpoint
+  const { data: statsData, isLoading: loadingStats } = useQuery({
+    queryKey: ['stats'],
     queryFn: () => statsApi.getOverview(),
-  });
-
-  const { data: categoryData, isLoading: loadingCategories } = useQuery({
-    queryKey: ['stats-categories'],
-    queryFn: () => statsApi.getCategoryDistribution(),
   });
 
   const { data: progressData, isLoading: loadingProgress } = useQuery({
@@ -112,7 +107,7 @@ export default function Stats() {
     queryFn: () => statsApi.getAchievements(),
   });
 
-  if (loadingOverview) {
+  if (loadingStats) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-6">
         <div className="max-w-7xl mx-auto">
@@ -134,7 +129,7 @@ export default function Stats() {
     );
   }
 
-  const stats = overview?.data;
+  const stats = statsData?.data;
   
   // Prepare data for charts
   const readingData = [
@@ -142,10 +137,12 @@ export default function Stats() {
     { name: 'Not Read', value: (stats?.overview?.total_books || 0) - (stats?.overview?.read_books || 0), color: '#EF4444' }
   ];
 
-  const categories = categoryData?.data?.map((cat, index) => ({
-    ...cat,
-    color: COLORS.category[index % COLORS.category.length]
-  })) || [];
+  // Use category_stats from the main stats endpoint
+  const categories = (stats?.category_stats || []).map((cat, index) => ({
+    name: cat.name,
+    book_count: cat.value,
+    color: cat.color || COLORS.category[index % COLORS.category.length]
+  }));
 
   const monthlyData = progressData?.data?.monthly_data?.map((item, index) => ({
     month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][item.month - 1],
@@ -296,19 +293,49 @@ export default function Stats() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Top Authors */}
           <ChartCard title="👥 Top Authors" className="lg:col-span-2">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topAuthors} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis type="number" stroke="#6B7280" />
-                <YAxis dataKey="name" type="category" width={100} stroke="#6B7280" />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="book_count" fill="#8B5CF6" radius={[0, 4, 4, 0]}>
-                  {topAuthors.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS.primary[index % COLORS.primary.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {topAuthors.map((author, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {author.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {author.name}
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <BookOpenIcon className="h-4 w-4 mr-1" />
+                          {author.book_count} book{author.book_count !== 1 ? 's' : ''}
+                        </div>
+                        <div className="flex items-center text-sm text-green-600">
+                          <CheckCircleIcon className="h-4 w-4 mr-1" />
+                          {author.books_read} read
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {author.book_count}
+                      </div>
+                      <div className="text-xs text-gray-500">total books</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {topAuthors.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <UsersIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-lg font-medium">No authors found</p>
+                  <p className="text-sm">Start adding books to see your top authors</p>
+                </div>
+              )}
+            </div>
           </ChartCard>
 
           {/* Quick Stats */}

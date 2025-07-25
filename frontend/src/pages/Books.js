@@ -9,7 +9,9 @@ import {
   CalendarDaysIcon,
   StarIcon,
   TrashIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { booksApi, categoriesApi, subCategoriesApi } from '../services/api';
 import { ConfirmDialog, NotificationToast, useNotifications } from '../components/Modals';
@@ -32,22 +34,27 @@ const AddBookModal = ({ isOpen, onClose, showError }) => {
   });
   const [selectedCategory, setSelectedCategory] = useState('');
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getAll().then(res => res.data),
     enabled: Boolean(isOpen)
   });
 
-  const { data: subCategories = [] } = useQuery({
+  const { data: subCategories } = useQuery({
     queryKey: ['sub-categories', selectedCategory],
     queryFn: () => subCategoriesApi.getByCategory(selectedCategory).then(res => res.data),
     enabled: Boolean(isOpen && selectedCategory)
   });
 
+  // Safe fallback to arrays
+  const safeCategories = Array.isArray(categories?.data) ? categories.data : [];
+  const safeSubCategories = Array.isArray(subCategories) ? subCategories : [];
+
   const createBookMutation = useMutation({
     mutationFn: (bookData) => booksApi.create(bookData),
     onSuccess: () => {
       queryClient.invalidateQueries(['books']);
+      queryClient.invalidateQueries(['authors-from-books']);
       onClose();
       setFormData({
         title: '',
@@ -89,7 +96,7 @@ const AddBookModal = ({ isOpen, onClose, showError }) => {
     const { name, value, type, checked } = e.target;
     
     if (name === 'category_id') {
-      const selectedCat = categories.find(cat => cat.id === parseInt(value));
+      const selectedCat = safeCategories.find(cat => cat.id === parseInt(value));
       setSelectedCategory(selectedCat ? selectedCat.name : '');
       setFormData(prev => ({
         ...prev,
@@ -201,7 +208,7 @@ const AddBookModal = ({ isOpen, onClose, showError }) => {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                   <option value="">Select a category</option>
-                  {categories.map(category => (
+                  {safeCategories.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -221,7 +228,7 @@ const AddBookModal = ({ isOpen, onClose, showError }) => {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 >
                   <option value="">Select a sub-category</option>
-                  {subCategories.map(subCat => (
+                  {safeSubCategories.map(subCat => (
                     <option key={subCat.value} value={subCat.value}>
                       {subCat.name}
                     </option>
@@ -653,13 +660,100 @@ const MarkAsReadModal = ({ isOpen, onClose, onConfirm, bookTitle }) => {
   );
 };
 
+// Pagination component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const getVisiblePages = () => {
+    const pages = [];
+    const showPages = 5;
+    
+    let start = Math.max(1, currentPage - Math.floor(showPages / 2));
+    let end = Math.min(totalPages, start + showPages - 1);
+    
+    if (end - start + 1 < showPages) {
+      start = Math.max(1, end - showPages + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+      <div className="flex flex-1 justify-between sm:hidden">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm text-gray-700">
+            Page <span className="font-medium">{currentPage}</span> of{' '}
+            <span className="font-medium">{totalPages}</span>
+          </p>
+        </div>
+        <div>
+          <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            
+            {getVisiblePages().map((page) => (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                  page === currentPage
+                    ? 'z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Books Component
 export default function Books() {
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [markAsReadModal, setMarkAsReadModal] = useState({ isOpen: false, bookId: null, bookTitle: '' });
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: '', id: null });
+  const limit = 20;
   const queryClient = useQueryClient();
   const { notifications, removeNotification, showSuccess, showError } = useNotifications();
 
@@ -667,6 +761,7 @@ export default function Books() {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
+      setPage(1); // Reset to first page when searching
     }, 300);
 
     return () => clearTimeout(timer);
@@ -678,8 +773,12 @@ export default function Books() {
   }, []);
 
   const { data: booksData, isLoading, error } = useQuery({
-    queryKey: ['books', { search: debouncedSearch }],
-    queryFn: () => booksApi.getAll({ search: debouncedSearch }).then(res => res.data),
+    queryKey: ['books', { search: debouncedSearch, page, limit }],
+    queryFn: () => booksApi.getAll({ 
+      search: debouncedSearch || undefined, 
+      page, 
+      limit 
+    }).then(res => res.data),
   });
 
   const deleteBookMutation = useMutation({
@@ -713,7 +812,7 @@ export default function Books() {
   };
 
   const handleMarkAsRead = (bookId) => {
-    const book = books.find(b => b.id === bookId);
+    const book = booksData?.data.find(b => b.id === bookId);
     setMarkAsReadModal({ 
       isOpen: true, 
       bookId: bookId, 
@@ -810,11 +909,20 @@ export default function Books() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map(book => (
-            <BookCard key={book.id} book={book} onDelete={handleDeleteBook} onMarkAsRead={handleMarkAsRead} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {books.map(book => (
+              <BookCard key={book.id} book={book} onDelete={handleDeleteBook} onMarkAsRead={handleMarkAsRead} />
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          <Pagination 
+            currentPage={pagination.page || 1}
+            totalPages={pagination.pages || 1}
+            onPageChange={setPage}
+          />
+        </>
       )}
 
       {/* Add Book Modal */}

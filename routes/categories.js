@@ -91,16 +91,58 @@ router.get('/:id/books', async (req, res) => {
 // Get all categories
 router.get('/', async (req, res) => {
   try {
-    const categories = await db('categories')
+    const { 
+      search, 
+      page = 1, 
+      limit = 20 
+    } = req.query;
+    
+    const offset = (page - 1) * limit;
+
+    let baseQuery = db('categories');
+    
+    if (search) {
+      baseQuery = baseQuery.where('categories.name', 'like', `%${search}%`);
+    }
+
+    // Get total count for pagination (separate query without joins/groupby)
+    const totalCount = await baseQuery.clone().count('id as count');
+    const total = parseInt(totalCount[0].count);
+
+    // Build the main query with joins and grouping
+    let query = db('categories')
       .leftJoin('books', 'categories.id', 'books.category_id')
       .select(
         'categories.*',
         db.raw('COUNT(books.id) as book_count')
       )
-      .groupBy('categories.id')
-      .orderBy('categories.name');
+      .groupBy('categories.id');
 
-    res.json(categories);
+    if (search) {
+      query = query.where('categories.name', 'like', `%${search}%`);
+    }
+
+    // Apply pagination and sorting
+    const categoriesRaw = await query
+      .orderBy('categories.name')
+      .limit(parseInt(limit))
+      .offset(offset);
+
+    // Convert book_count to integer to prevent string concatenation issues
+    const categories = categoriesRaw.map(category => ({
+      ...category,
+      book_count: parseInt(category.book_count) || 0
+    }));
+
+    res.json({
+      data: categories,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });

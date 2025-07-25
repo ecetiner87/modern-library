@@ -24,6 +24,7 @@
 - **Author Profiles**: View all authors with book counts and average ratings
 - **Search Functionality**: Find authors quickly with debounced search
 - **Author Details**: See all books by specific authors with reading status
+- **Dynamic Updates**: Authors are automatically created from book data
 
 ### 🏷️ **Category System**
 - **Visual Organization**: Color-coded categories with progress bars
@@ -51,7 +52,7 @@
 ### 📈 **Advanced Analytics**
 - **Reading Progress Charts**: Visual representation of monthly reading habits
 - **Category Distribution**: Interactive pie charts showing library composition
-- **Top Authors**: Bar charts of most-read authors
+- **Top Authors**: Modern card-based display of most-read authors
 - **Achievement Tracking**: Reading streaks, goals, and milestones
 
 ## 🖼️ Screenshots
@@ -100,7 +101,7 @@
 
 ### Backend
 - **Node.js** with Express.js framework
-- **SQLite** database for development (PostgreSQL ready)
+- **PostgreSQL** database for production (SQLite for development)
 - **Knex.js** for database migrations and queries
 - **Express-validator** for input validation
 - **CORS** and security middleware
@@ -127,6 +128,7 @@
 ### Prerequisites
 - **Node.js 18+** ✅
 - **npm 8+** ✅
+- **Docker & Docker Compose** (for production deployment)
 
 ### Installation
 
@@ -136,26 +138,25 @@
    cd modern-library
    ```
 
-2. **Install backend dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Setup database**
+2. **Setup environment**
    ```bash
    # Copy environment configuration
    cp env.example .env
-   
-   # Run database migrations
-   npm run migrate
-   npm run seed
    ```
 
-4. **Install frontend dependencies**
+3. **Install dependencies**
    ```bash
-   cd frontend
    npm install
-   cd ..
+   cd frontend && npm install && cd ..
+   ```
+
+4. **Setup database**
+   ```bash
+   # Run database migrations
+   npm run migrate
+   
+   # Seed initial data (categories)
+   npm run seed
    ```
 
 5. **Start the application**
@@ -173,7 +174,7 @@
 
 ## 🚀 Production Deployment
 
-### Quick Production Setup
+### Quick Production Setup with Docker
 
 For production deployment with Docker and PostgreSQL:
 
@@ -182,31 +183,21 @@ For production deployment with Docker and PostgreSQL:
 cp env.production.example .env.production
 # Edit .env.production with your secure values
 
-# 2. Run automated deployment
-./scripts/production-deploy.sh
+# 2. Build and start with Docker Compose
+docker compose up -d
 
 # 3. Access your production application
 # Frontend: http://localhost:3000
 # Backend: http://localhost:3001/api
 ```
 
-### Apache Derby Migration
+### Manual Production Setup
 
-To migrate your existing Apache Derby database:
-
-1. **Export Derby data to CSV:**
-   ```sql
-   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'BOOKS', 'books.csv', null, null, null);
-   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'AUTHORS', 'authors.csv', null, null, null);
-   CALL SYSCS_UTIL.SYSCS_EXPORT_TABLE(null, 'CATEGORIES', 'categories.csv', null, null, null);
-   ```
-
-2. **Copy CSV files to migration-data/ folder**
-
-3. **Run migration:**
-   ```bash
-   docker-compose exec backend npm run migrate:derby
-   ```
+1. **Setup PostgreSQL database**
+2. **Configure environment variables**
+3. **Run migrations and seeds**
+4. **Build frontend for production**
+5. **Start with PM2 or similar process manager**
 
 📖 **Detailed Guide:** See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for complete production setup instructions.
 
@@ -214,19 +205,17 @@ To migrate your existing Apache Derby database:
 
 ```
 modern-library/
-├── backend/
-│   ├── routes/          # API endpoints
-│   │   ├── books.js     # Book management
-│   │   ├── authors.js   # Author operations
-│   │   ├── categories.js # Category system
-│   │   ├── reading-history.js # Reading tracking
-│   │   ├── wishlist.js  # Wishlist management
-│   │   ├── borrowed.js  # Borrowed books
-│   │   └── stats.js     # Analytics & statistics
-│   ├── database/        # Database layer
-│   │   ├── migrations/  # Database schema
-│   │   └── seeds/       # Sample data
-│   └── server.js        # Main server
+├── routes/              # API endpoints
+│   ├── books.js         # Book management
+│   ├── authors.js       # Author operations
+│   ├── categories.js    # Category system
+│   ├── reading-history.js # Reading tracking
+│   ├── wishlist.js      # Wishlist management
+│   ├── borrowed.js      # Borrowed books
+│   └── stats.js         # Analytics & statistics
+├── database/            # Database layer
+│   ├── migrations/      # Database schema
+│   └── seeds/           # Initial data
 ├── frontend/
 │   └── src/
 │       ├── components/  # Reusable components
@@ -271,12 +260,12 @@ Complete API documentation is available in [API_DOCUMENTATION.md](API_DOCUMENTAT
 ### Advanced Analytics
 - **Reading Progress**: Monthly/yearly reading statistics
 - **Category Distribution**: Visual breakdown of your library
-- **Author Statistics**: Most-read authors and their ratings
+- **Author Statistics**: Most-read authors with modern card design
 - **Achievement System**: Track reading streaks and milestones
 
 ### Modern UI/UX
 - **Responsive Design**: Works perfectly on desktop and mobile
-- **Dark Mode Ready**: Modern color scheme with customizable themes
+- **Modern Color Scheme**: Beautiful gradients and consistent styling
 - **Interactive Elements**: Hover effects, animations, and transitions
 - **Accessibility**: Screen reader friendly with proper ARIA labels
 - **Performance**: Optimized loading with React Query caching
@@ -290,161 +279,27 @@ Complete API documentation is available in [API_DOCUMENTATION.md](API_DOCUMENTAT
 ### Environment Variables
 ```bash
 # Database Configuration
-DB_CLIENT=sqlite3
-DB_FILENAME=./database.sqlite
+DB_CLIENT=postgresql
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=library_db
+DB_USER=your_username
+DB_PASSWORD=your_password
 
 # Server Configuration
 PORT=3001
-NODE_ENV=development
+NODE_ENV=production
 
 # Frontend Configuration (built-in proxy)
-REACT_APP_API_URL=http://localhost:3001/api
-```
-
-### Database Management
-```bash
-# Development commands
-npm run migrate          # Apply database migrations
-npm run seed            # Insert sample data
-npm run reset           # Reset database
-npm run migrate:rollback # Rollback migrations
-
-# Database exploration
-sqlite3 database.sqlite
-.tables                  # List all tables
-.schema books           # Show table schema
-```
-
-## 🚀 Deployment
-
-### Development
-Already configured! Just run `npm start` and `cd frontend && npm start`.
-
-### Production (Docker)
-```bash
-# Build and run with Docker
-docker-compose -f docker-compose.yml up -d
-```
-
-### Manual Production
-```bash
-# Backend
-npm install --production
-npm run migrate
-npm start
-
-# Frontend
-cd frontend
-npm install
-npm run build
-# Serve build folder with nginx or static server
-```
-
-## 📈 Performance & Features
-
-### Optimizations
-- **React Query**: Intelligent caching and background updates
-- **Debounced Search**: Prevents excessive API calls
-- **Lazy Loading**: Components load only when needed
-- **SQLite**: Fast local database with excellent performance
-- **Responsive Images**: Optimized loading for different screen sizes
-
-### Accessibility
-- **Keyboard Navigation**: Full keyboard support
-- **Screen Readers**: Proper ARIA labels and roles
-- **Color Contrast**: WCAG compliant color schemes
-- **Focus Management**: Clear focus indicators
-
-## 🔮 Future Enhancements
-
-### Planned Features
-- [ ] **User Authentication**: Multi-user support with personal libraries
-- [ ] **Book Cover Upload**: Visual book covers with image management
-- [ ] **Reading Goals**: Set and track annual reading goals
-- [ ] **Export/Import**: Backup and restore library data
-- [ ] **Mobile App**: React Native mobile application
-- [ ] **Social Features**: Share reviews and recommendations
-- [ ] **Integration**: Goodreads, Google Books API integration
-- [ ] **Advanced Analytics**: Reading heat maps and detailed insights
-
-### Technical Improvements
-- [ ] **PostgreSQL Migration**: Production-ready database
-- [ ] **Full-text Search**: Advanced search with Elasticsearch
-- [ ] **Caching Layer**: Redis for improved performance
-- [ ] **API Rate Limiting**: Production security measures
-- [ ] **Automated Testing**: Comprehensive test suite
-- [ ] **CI/CD Pipeline**: Automated deployment
-
-## 🧪 Testing
-
-### Manual Testing
-1. **Dashboard**: Verify all statistics display correctly
-2. **Books**: Test adding, editing, deleting, and marking as read
-3. **Search**: Test search functionality across all sections
-4. **Categories**: Verify filtering and subcategory navigation
-5. **Wishlist**: Test adding items and Cimri.com integration
-6. **Borrowed Books**: Test lending and return tracking
-
-### API Testing
-```bash
-# Test API endpoints
-curl http://localhost:3001/api/health
-curl http://localhost:3001/api/books
-curl http://localhost:3001/api/stats
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Port already in use:**
-```bash
-lsof -ti:3001 | xargs kill -9
-```
-
-**Database locked:**
-```bash
-rm database.sqlite
-npm run migrate
-npm run seed
-```
-
-**Node modules issues:**
-```bash
-rm -rf node_modules frontend/node_modules
-npm install
-cd frontend && npm install
-```
-
-## 📞 Support
-
-### Getting Help
-1. Check this README for setup instructions
-2. Review [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for API details
-3. Check the browser console for error messages
-4. Verify both frontend and backend servers are running
-
-### Development
-```bash
-# Check backend status
-curl http://localhost:3001/api/health
-
-# Check frontend status
-curl http://localhost:3000
-
-# View logs
-npm start  # Backend logs
-cd frontend && npm start  # Frontend logs
 ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Make your changes and test thoroughly
-4. Commit your changes: `git commit -m 'Add new feature'`
-5. Push to the branch: `git push origin feature/new-feature`
-6. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
@@ -452,13 +307,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Modern Web Technologies**: React, Node.js, and the amazing open-source ecosystem
-- **UI Libraries**: Tailwind CSS for beautiful, responsive design
-- **Chart Libraries**: Recharts for interactive data visualization
-- **Community**: All the developers who contributed to the libraries used in this project
+- Built with modern web technologies
+- Inspired by the love of reading and knowledge management
+- Special thanks to the open-source community
 
 ---
 
-**Ready to modernize your library management? Get started now!** 🚀
-
-<!-- ![Footer](docs/images/footer-banner.png) -->
+**Ready to transform your library?** 🚀 Start your journey with the Modern Library Management System today!

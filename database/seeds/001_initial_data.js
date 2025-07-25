@@ -16,16 +16,4 @@ exports.seed = async function(knex) {
     { name: 'HOBI', description: 'Hobi ve yaşam tarzı', color: '#EF4444' },
     { name: 'BILIM ve SANAT', description: 'Bilim, teknoloji ve sanat', color: '#6366F1' }
   ]);
-
-  // Insert authors
-  await knex('authors').insert([
-    { name: 'Agatha Christie', nationality: 'British', biography: 'Famous mystery writer' },
-    { name: 'George Orwell', nationality: 'British', biography: 'Author of 1984 and Animal Farm' },
-    { name: 'Victor Hugo', nationality: 'French', biography: 'French romantic writer' },
-    { name: 'Fyodor Dostoevsky', nationality: 'Russian', biography: 'Russian novelist and philosopher' },
-    { name: 'J.K. Rowling', nationality: 'British', biography: 'Creator of Harry Potter series' },
-    { name: 'Stephen King', nationality: 'American', biography: 'Master of horror fiction' },
-    { name: 'Isaac Asimov', nationality: 'American', biography: 'Science fiction writer' },
-    { name: 'Turkish Authors', nationality: 'Turkish', biography: 'Various Turkish writers' }
-  ]);
 }; 

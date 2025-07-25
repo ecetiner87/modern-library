@@ -10,12 +10,11 @@ router.get('/', async (req, res) => {
 
     let query = db('reading_history')
       .join('books', 'reading_history.book_id', 'books.id')
-      .leftJoin('authors', 'books.author_id', 'authors.id')
       .select(
         'reading_history.*',
         'books.title',
         'books.pages',
-        'authors.name as author_name'
+        db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`)
       );
 
     if (year) {

@@ -58,9 +58,8 @@ router.post('/', [
       publisher: publisher?.trim() || null
     };
 
-    // Insert and get the ID (SQLite compatible)
-    const wishId = await db('wishlist').insert(insertData);
-    const newWish = await db('wishlist').where('id', wishId[0]).first();
+    // Insert and return the new wish (PostgreSQL compatible)
+    const [newWish] = await db('wishlist').insert(insertData).returning('*');
     res.status(201).json(newWish);
   } catch (error) {
     console.error('Error adding wish to wishlist:', error);

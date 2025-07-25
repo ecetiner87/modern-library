@@ -14,6 +14,11 @@ npm-debug.log*
 database.sqlite
 *.db
 
+# Persistent Data (Docker volumes)
+data/
+uploads/
+backups/
+
 # Build outputs
 frontend/build/
 dist/

@@ -12,9 +12,8 @@ router.get('/from-books', async (req, res) => {
       .select(
         db.raw('author_first_name as first_name'),
         db.raw('author_last_name as last_name'),
-        db.raw('CONCAT(author_first_name, " ", author_last_name) as full_name'),
         db.raw('COUNT(*) as book_count'),
-        db.raw('SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as read_count'),
+        db.raw('SUM(CASE WHEN is_read = true THEN 1 ELSE 0 END) as read_count'),
         db.raw('AVG(CASE WHEN rating IS NOT NULL AND rating > 0 THEN rating END) as avg_rating')
       )
       .whereNotNull('author_first_name')
@@ -32,7 +31,13 @@ router.get('/from-books', async (req, res) => {
 
     const authors = await query.orderBy('author_last_name');
 
-    res.json(authors);
+    // Add full_name to each author
+    const authorsWithFullName = authors.map(author => ({
+      ...author,
+      full_name: `${author.first_name} ${author.last_name}`
+    }));
+
+    res.json(authorsWithFullName);
   } catch (error) {
     console.error('Error fetching authors from books:', error);
     res.status(500).json({ error: 'Failed to fetch authors from books' });
@@ -179,23 +184,47 @@ router.delete('/:id', async (req, res) => {
 // Get all authors (traditional authors table)
 router.get('/', async (req, res) => {
   try {
-    const { search } = req.query;
+    const { 
+      search, 
+      page = 1, 
+      limit = 50 
+    } = req.query;
     
+    const offset = (page - 1) * limit;
+
     let query = db('authors')
-      .leftJoin('books', 'authors.id', 'books.author_id')
       .select(
         'authors.*',
-        db.raw('COUNT(books.id) as book_count')
-      )
-      .groupBy('authors.id');
+        db.raw(`(
+          SELECT COUNT(*) 
+          FROM books 
+          WHERE (books.author_first_name || ' ' || books.author_last_name) = authors.name
+        ) as book_count`)
+      );
 
     if (search) {
       query = query.where('authors.name', 'like', `%${search}%`);
     }
 
-    const authors = await query.orderBy('authors.name');
+    // Get total count for pagination
+    const totalCount = await query.clone().clearSelect().count('authors.id as count');
+    const total = parseInt(totalCount[0].count);
 
-    res.json(authors);
+    // Apply pagination and sorting
+    const authors = await query
+      .orderBy('authors.name')
+      .limit(limit)
+      .offset(offset);
+
+    res.json({
+      data: authors,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching authors:', error);
     res.status(500).json({ error: 'Failed to fetch authors' });

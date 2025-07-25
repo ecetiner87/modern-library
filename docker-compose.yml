@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -14,8 +12,9 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d
-      - ./backups:/backups
+      - postgres_backups:/var/lib/postgresql/backups
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - ./backups:/backups:ro
     networks:
       - library-network
     healthcheck:
@@ -49,7 +48,7 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-modern_library}
-      DB_USER: ${DB_USER:-postgres}  
+      DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET:-your-jwt-secret}
@@ -60,6 +59,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
+      - ./scripts:/app/scripts:ro
     networks:
       - library-network
     healthcheck:
@@ -77,12 +77,8 @@ services:
           memory: 256M
     command: >
       sh -c "
-        echo 'Waiting for database to be ready...' &&
-        sleep 10 &&
         echo 'Running database migrations...' &&
         npm run migrate &&
-        echo 'Seeding initial data...' &&
-        npm run seed &&
         echo 'Starting application...' &&
         npm start
       "
@@ -156,8 +152,8 @@ services:
       PGHOST: postgres
       PGPORT: 5432
     volumes:
-      - ./backups:/backups
-      - ./scripts/backup.sh:/backup.sh
+      - postgres_backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
     networks:
       - library-network
     restart: unless-stopped
@@ -182,5 +178,15 @@ networks:
 volumes:
   postgres_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/postgres
+  postgres_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/backups
   redis_data:
     driver: local 
