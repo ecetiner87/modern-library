@@ -22,6 +22,7 @@ app.use('/api/authors', require('./routes/authors'));
 app.use('/api/reading-history', require('./routes/reading-history'));
 app.use('/api/wishlist', require('./routes/wishlist'));
 app.use('/api/borrowed', require('./routes/borrowed'));
+app.use('/api/currently-reading', require('./routes/currently-reading'));
 app.use('/api/stats', require('./routes/stats'));
 
 // Health check endpoint

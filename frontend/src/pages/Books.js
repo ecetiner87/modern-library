@@ -419,17 +419,12 @@ const BookCard = ({ book, onDelete, onMarkAsRead }) => {
           </h3>
           
           {/* Author Information */}
-          {book.author_name && (
+          {(book.author_name || (book.author_first_name || book.author_last_name)) && (
             <div className="flex items-center text-sm text-gray-600 mb-3">
               <UserIcon className="h-4 w-4 mr-2 text-gray-400" />
-              <span className="font-medium">{book.author_name}</span>
-            </div>
-          )}
-          
-          {(book.author_first_name || book.author_last_name) && (
-            <div className="flex items-center text-sm text-gray-600 mb-3">
-              <UserIcon className="h-4 w-4 mr-2 text-gray-400" />
-              <span className="font-medium">{book.author_first_name} {book.author_last_name}</span>
+              <span className="font-medium">
+                {book.author_name || `${book.author_first_name} ${book.author_last_name}`}
+              </span>
             </div>
           )}
           
@@ -839,6 +834,14 @@ export default function Books() {
   };
 
   const books = booksData?.data || [];
+  
+  // Sort books alphabetically by title
+  const sortedBooks = books.sort((a, b) => {
+    const titleA = a.title.toLowerCase();
+    const titleB = b.title.toLowerCase();
+    return titleA.localeCompare(titleB);
+  });
+  
   const pagination = booksData?.pagination || {};
 
   if (isLoading) {
@@ -889,7 +892,7 @@ export default function Books() {
       </div>
 
       {/* Books Grid */}
-      {books.length === 0 ? (
+      {sortedBooks.length === 0 ? (
         <div className="text-center py-12">
           <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No books found</h3>
@@ -911,7 +914,7 @@ export default function Books() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map(book => (
+            {sortedBooks.map(book => (
               <BookCard key={book.id} book={book} onDelete={handleDeleteBook} onMarkAsRead={handleMarkAsRead} />
             ))}
           </div>

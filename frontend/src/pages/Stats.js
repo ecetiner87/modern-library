@@ -269,21 +269,35 @@ export default function Stats() {
 
           {/* Category Distribution */}
           <ChartCard title="🏷️ Books by Category">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={categories}
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={80}
                   dataKey="book_count"
-                  label={({ name, book_count }) => `${name}: ${book_count}`}
+                  labelLine={false}
                 >
                   {categories.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  layout="vertical" 
+                  verticalAlign="middle" 
+                  align="right"
+                  wrapperStyle={{
+                    paddingLeft: '20px',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value, entry) => (
+                    <span style={{ color: entry.color, fontWeight: 'bold' }}>
+                      {value}: {entry.payload.book_count}
+                    </span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>

@@ -10,7 +10,8 @@ import {
   ArrowRightOnRectangleIcon,
   ChartBarIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Books', href: '/books', icon: BookOpenIcon },
   { name: 'Authors', href: '/authors', icon: UsersIcon },
   { name: 'Categories', href: '/categories', icon: TagIcon },
+  { name: 'Currently Reading', href: '/currently-reading', icon: EyeIcon },
   { name: 'Reading History', href: '/reading-history', icon: ClockIcon },
   { name: 'Wishlist', href: '/wishlist', icon: HeartIcon },
   { name: 'Borrowed Books', href: '/borrowed', icon: ArrowRightOnRectangleIcon },

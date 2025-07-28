@@ -69,8 +69,16 @@ export default function Authors() {
 
   const authors = data || [];
   const safeAuthors = Array.isArray(authors) ? authors : [];
-  console.log('Processed authors:', safeAuthors);
-  const pagination = { total: safeAuthors.length, page: 1, pages: 1, limit: safeAuthors.length };
+  
+  // Sort authors alphabetically by full_name
+  const sortedAuthors = safeAuthors.sort((a, b) => {
+    const nameA = (a.full_name || `${a.first_name} ${a.last_name}`).toLowerCase();
+    const nameB = (b.full_name || `${b.first_name} ${b.last_name}`).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+  
+  console.log('Processed authors:', sortedAuthors);
+  const pagination = { total: sortedAuthors.length, page: 1, pages: 1, limit: sortedAuthors.length };
 
   return (
     <div className="space-y-6">
@@ -94,14 +102,14 @@ export default function Authors() {
           </h2>
         </div>
         <div className="p-6">
-          {safeAuthors.length === 0 ? (
+          {sortedAuthors.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No authors found.
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {safeAuthors.map((author, index) => (
+                {sortedAuthors.map((author, index) => (
                   <div
                     key={`${author.first_name}-${author.last_name}-${index}`}
                     onClick={() => handleAuthorClick(author)}

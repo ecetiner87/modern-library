@@ -14,7 +14,8 @@ router.get('/', async (req, res) => {
       recentActivity,
       wishlistStats,
       categoryStats,
-      readingActivity
+      readingActivity,
+      totalValue
     ] = await Promise.all([
       db('books').count('id as count').first(),
       db('books').where('is_read', true).count('id as count').first(),
@@ -60,7 +61,9 @@ router.get('/', async (req, res) => {
         )
         .whereRaw("finish_date >= NOW() - INTERVAL '12 months'")
         .groupBy(db.raw("DATE_TRUNC('month', finish_date)"))
-        .orderBy('month')
+        .orderBy('month'),
+      // Total library value
+      db('books').sum('price as total').first()
     ]);
 
     res.json({
@@ -71,6 +74,7 @@ router.get('/', async (req, res) => {
         borrowed_books: parseInt(borrowedBooks.count),
         total_authors: parseInt(uniqueAuthors.count),
         total_categories: parseInt(totalCategories.count),
+        total_value: parseFloat(totalValue.total || 0).toFixed(2),
         reading_percentage: totalBooks.count > 0 
           ? Math.round((readBooks.count / totalBooks.count) * 100) 
           : 0

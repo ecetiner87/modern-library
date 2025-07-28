@@ -16,9 +16,11 @@
     "setup:sqlite": "npm install && npm run migrate:sqlite && npm run seed:sqlite",
     "reset": "npm run migrate:rollback && npm run migrate && npm run seed",
     "migrate:derby": "node scripts/derby-migration.js",
-    "migration:help": "cat scripts/derby-export-guide.md"
+    "migration:help": "cat scripts/derby-export-guide.md",
+    "import:books": "node scripts/bulk-import-books.js"
   },
   "dependencies": {
+    "axios": "^1.11.0",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",

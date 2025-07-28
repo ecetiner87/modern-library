@@ -97,11 +97,14 @@ export const borrowedApi = {
   markAsReturned: (id, data = {}) => api.patch(`/borrowed/${id}/return`, data),
 };
 
-// Borrowed Books API
-export const borrowedBooksApi = {
-  getAll: (params = {}) => api.get('/borrowed', { params }),
-  lend: (data) => api.post('/borrowed', data),
-  return: (id, data) => api.patch(`/borrowed/${id}/return`, data),
+// Currently Reading API
+export const currentlyReadingApi = {
+  getAll: (params = {}) => api.get('/currently-reading', { params }),
+  getAvailableBooks: () => api.get('/currently-reading/available-books'),
+  create: (data) => api.post('/currently-reading', data),
+  update: (id, data) => api.patch(`/currently-reading/${id}`, data),
+  finish: (id) => api.patch(`/currently-reading/${id}/finish`),
+  delete: (id) => api.delete(`/currently-reading/${id}`),
 };
 
 // Statistics API

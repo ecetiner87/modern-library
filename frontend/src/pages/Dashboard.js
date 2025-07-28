@@ -7,7 +7,8 @@ import {
   HeartIcon, 
   ArrowRightOnRectangleIcon,
   UsersIcon,
-  TagIcon
+  TagIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { statsApi } from '../services/api';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ const StatCard = ({ title, value, icon: Icon, color = 'indigo' }) => {
     yellow: 'bg-yellow-50 text-yellow-700',
     blue: 'bg-blue-50 text-blue-700',
     purple: 'bg-purple-50 text-purple-700',
+    emerald: 'bg-emerald-50 text-emerald-700',
   };
 
   return (
@@ -154,6 +156,12 @@ export default function Dashboard() {
           value={`${overview?.reading_percentage || 0}%`}
           icon={CheckCircleIcon}
           color="green"
+        />
+        <StatCard
+          title="Total Library Value"
+          value={`₺${overview?.total_value || '0.00'}`}
+          icon={CurrencyDollarIcon}
+          color="emerald"
         />
         <StatCard
           title="Wishlist"

@@ -10,12 +10,11 @@ router.get('/', async (req, res) => {
     
     let query = db('borrowed_books')
       .join('books', 'borrowed_books.book_id', 'books.id')
-      .leftJoin('authors', 'books.author_id', 'authors.id')
       .select(
         'borrowed_books.*',
         'books.title',
         'books.publisher',
-        'authors.name as author_name'
+        db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`)
       );
 
     if (status === 'active') {
@@ -52,12 +51,11 @@ router.get('/', async (req, res) => {
 router.get('/available-books', async (req, res) => {
   try {
     const books = await db('books')
-      .leftJoin('authors', 'books.author_id', 'authors.id')
       .select(
         'books.id',
         'books.title',
         'books.publisher',
-        'authors.name as author_name'
+        db.raw(`(books.author_first_name || ' ' || books.author_last_name) as author_name`)
       )
       .where('books.is_borrowed', false)
       .orderBy('books.title');

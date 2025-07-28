@@ -10,6 +10,7 @@ import Categories from './pages/Categories';
 import ReadingHistory from './pages/ReadingHistory';
 import Wishlist from './pages/Wishlist';
 import BorrowedBooks from './pages/BorrowedBooks';
+import CurrentlyReading from './pages/CurrentlyReading';
 import Stats from './pages/Stats';
 import './App.css';
 
@@ -36,6 +37,7 @@ function App() {
             <Route path="/reading-history" element={<ReadingHistory />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/borrowed" element={<BorrowedBooks />} />
+            <Route path="/currently-reading" element={<CurrentlyReading />} />
             <Route path="/stats" element={<Stats />} />
           </Routes>
         </Layout>
