@@ -30,6 +30,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/solid';
 import { statsApi } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Modern color palettes
 const COLORS = {
@@ -39,32 +40,86 @@ const COLORS = {
 };
 
 // Custom components
-const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
-  <div className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-${color}-200`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-        <p className={`text-3xl font-bold text-${color}-600 mb-1`}>{value}</p>
-        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-        {trend && (
-          <div className={`flex items-center mt-2 text-sm ${trend.positive ? 'text-green-600' : 'text-red-500'}`}>
-            <span>{trend.positive ? '↑' : '↓'} {trend.value}%</span>
-            <span className="ml-1 text-gray-500">vs last month</span>
-          </div>
-        )}
-      </div>
-      <div className={`p-3 rounded-full bg-${color}-100`}>
-        <Icon className={`h-8 w-8 text-${color}-600`} />
+const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }) => {
+  const { theme } = useTheme();
+  
+  const colorClasses = {
+    indigo: `${theme.primaryBg} ${theme.primary}`,
+    green: `${theme.successBg} ${theme.success}`,
+    red: `${theme.errorBg} ${theme.error}`,
+    yellow: `${theme.warningBg} ${theme.warning}`,
+    blue: 'bg-blue-50 text-blue-700',
+    purple: `${theme.primaryBg} ${theme.primary}`,
+    emerald: `${theme.successBg} ${theme.success}`,
+  };
+
+  const getIconBgColor = (colorName) => {
+    switch (colorName) {
+      case 'indigo':
+      case 'purple':
+        return theme.primaryBg.replace('bg-', 'bg-').replace('50', '100');
+      case 'green':
+      case 'emerald':
+        return theme.successBg.replace('bg-', 'bg-').replace('50', '100');
+      case 'red':
+        return theme.errorBg.replace('bg-', 'bg-').replace('50', '100');
+      case 'yellow':
+        return theme.warningBg.replace('bg-', 'bg-').replace('50', '100');
+      case 'blue':
+        return 'bg-blue-100';
+      default:
+        return theme.primaryBg.replace('bg-', 'bg-').replace('50', '100');
+    }
+  };
+
+  const getTextColor = (colorName) => {
+    switch (colorName) {
+      case 'indigo':
+      case 'purple':
+        return theme.primary;
+      case 'green':
+      case 'emerald':
+        return theme.success;
+      case 'red':
+        return theme.error;
+      case 'yellow':
+        return theme.warning;
+      case 'blue':
+        return 'text-blue-700';
+      default:
+        return theme.primary;
+    }
+  };
+
+  return (
+    <div className={`${theme.card} rounded-2xl ${theme.shadow} hover:${theme.shadowHover} transition-all duration-300 p-6 ${theme.border} ${theme.borderHover}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`text-sm font-medium ${theme.textSecondary} mb-1`}>{title}</p>
+          <p className={`text-3xl font-bold ${getTextColor(color)} mb-1`}>{value}</p>
+          {subtitle && <p className={`text-sm ${theme.textMuted}`}>{subtitle}</p>}
+          {trend && (
+            <div className={`flex items-center mt-2 text-sm ${trend.positive ? 'text-green-600' : 'text-red-500'}`}>
+              <span>{trend.positive ? '↑' : '↓'} {trend.value}%</span>
+              <span className={`ml-1 ${theme.textMuted}`}>vs last month</span>
+            </div>
+          )}
+        </div>
+        <div className={`p-3 rounded-full ${getIconBgColor(color)}`}>
+          <Icon className={`h-8 w-8 ${getTextColor(color)}`} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CustomTooltip = ({ active, payload, label }) => {
+  const { theme } = useTheme();
+  
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-        <p className="font-semibold text-gray-800">{label}</p>
+      <div className={`${theme.modal} p-4 rounded-lg ${theme.shadow} ${theme.border}`}>
+        <p className={`font-semibold ${theme.text}`}>{label}</p>
         {payload.map((entry, index) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {`${entry.name}: ${entry.value}`}
@@ -76,15 +131,20 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const ChartCard = ({ title, children, className = "" }) => (
-  <div className={`bg-white rounded-2xl shadow-lg p-6 border border-gray-100 ${className}`}>
-    <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-    {children}
-  </div>
-);
+const ChartCard = ({ title, children, className = "" }) => {
+  const { theme } = useTheme();
+  
+  return (
+    <div className={`${theme.card} rounded-2xl ${theme.shadow} p-6 ${theme.border} ${className}`}>
+      <h3 className={`text-lg font-semibold ${theme.text} mb-4`}>{title}</h3>
+      {children}
+    </div>
+  );
+};
 
 export default function Stats() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const { theme } = useTheme();
 
   // Fetch all statistics data from the main stats endpoint
   const { data: statsData, isLoading: loadingStats } = useQuery({
@@ -109,18 +169,18 @@ export default function Stats() {
 
   if (loadingStats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-6">
+      <div className={`min-h-screen ${theme.background} p-6`}>
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className={`h-8 ${theme.surface} rounded w-1/4 mb-8`}></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                <div key={i} className={`h-32 ${theme.surface} rounded-2xl`}></div>
               ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-200 rounded-2xl"></div>
+                <div key={i} className={`h-80 ${theme.surface} rounded-2xl`}></div>
               ))}
             </div>
           </div>
@@ -152,19 +212,19 @@ export default function Stats() {
   const topAuthors = authorsData?.data?.slice(0, 5) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-6">
+    <div className={`min-h-screen ${theme.background} p-6`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500">
-              <ChartBarIcon className="h-8 w-8 text-white" />
+            <div className={`p-2 rounded-lg ${theme.primaryBg}`}>
+              <ChartBarIcon className={`h-8 w-8 ${theme.primary}`} />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className={`text-3xl font-bold ${theme.text}`}>
               Library Analytics
             </h1>
           </div>
-          <p className="text-gray-600">Comprehensive insights into your reading journey</p>
+          <p className={`${theme.textSecondary}`}>Comprehensive insights into your reading journey</p>
         </div>
 
         {/* Overview Statistics */}
@@ -207,7 +267,7 @@ export default function Stats() {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className={`px-3 py-2 ${theme.input} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
               >
                 {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
                   <option key={year} value={year}>{year}</option>
@@ -222,9 +282,9 @@ export default function Stats() {
                     <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="month" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.chart.grid} />
+                <XAxis dataKey="month" stroke={theme.chart.text} />
+                <YAxis stroke={theme.chart.text} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area 
                   type="monotone" 
@@ -260,10 +320,10 @@ export default function Stats() {
               </PieChart>
             </ResponsiveContainer>
             <div className="mt-4 text-center">
-              <div className="text-3xl font-bold text-green-600">
+              <div className={`text-3xl font-bold ${theme.success}`}>
                 {stats?.overview?.reading_percentage || 0}%
               </div>
-              <div className="text-sm text-gray-500">Completion Rate</div>
+              <div className={`text-sm ${theme.textMuted}`}>Completion Rate</div>
             </div>
           </ChartCard>
 
@@ -356,36 +416,36 @@ export default function Stats() {
           <div className="space-y-4">
             <ChartCard title="🏆 Achievements">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                <div className={`flex items-center justify-between p-3 ${theme.warningBg} rounded-lg ${theme.border}`}>
                   <div className="flex items-center gap-3">
-                    <TrophyIcon className="h-6 w-6 text-yellow-600" />
-                    <span className="font-medium text-gray-800">Books Read</span>
+                    <TrophyIcon className={`h-6 w-6 ${theme.warning}`} />
+                    <span className={`font-medium ${theme.text}`}>Books Read</span>
                   </div>
-                  <span className="font-bold text-yellow-600">{stats?.overview?.read_books || 0}</span>
+                  <span className={`font-bold ${theme.warning}`}>{stats?.overview?.read_books || 0}</span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-200">
+                <div className={`flex items-center justify-between p-3 ${theme.errorBg} rounded-lg ${theme.border}`}>
                   <div className="flex items-center gap-3">
-                    <FireIcon className="h-6 w-6 text-red-600" />
-                    <span className="font-medium text-gray-800">Reading Streak</span>
+                    <FireIcon className={`h-6 w-6 ${theme.error}`} />
+                    <span className={`font-medium ${theme.text}`}>Reading Streak</span>
                   </div>
-                  <span className="font-bold text-red-600">{achievementsData?.data?.current_streak || 0} days</span>
+                  <span className={`font-bold ${theme.error}`}>{achievementsData?.data?.current_streak || 0} days</span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className={`flex items-center justify-between p-3 ${theme.primaryBg} rounded-lg ${theme.border}`}>
                   <div className="flex items-center gap-3">
-                    <CalendarIcon className="h-6 w-6 text-blue-600" />
-                    <span className="font-medium text-gray-800">Reading Days</span>
+                    <CalendarIcon className={`h-6 w-6 ${theme.primary}`} />
+                    <span className={`font-medium ${theme.text}`}>Reading Days</span>
                   </div>
-                  <span className="font-bold text-blue-600">{achievementsData?.data?.total_reading_days || 0}</span>
+                  <span className={`font-bold ${theme.primary}`}>{achievementsData?.data?.total_reading_days || 0}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                <div className={`flex items-center justify-between p-3 ${theme.successBg} rounded-lg ${theme.border}`}>
                   <div className="flex items-center gap-3">
-                    <ClockIcon className="h-6 w-6 text-green-600" />
-                    <span className="font-medium text-gray-800">Avg Rating</span>
+                    <ClockIcon className={`h-6 w-6 ${theme.success}`} />
+                    <span className={`font-medium ${theme.text}`}>Avg Rating</span>
                   </div>
-                  <span className="font-bold text-green-600">⭐ {achievementsData?.data?.average_rating || 0}</span>
+                  <span className={`font-bold ${theme.success}`}>⭐ {achievementsData?.data?.average_rating || 0}</span>
                 </div>
               </div>
             </ChartCard>
@@ -394,16 +454,16 @@ export default function Stats() {
             <ChartCard title="📖 Recent Activity">
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {stats?.recent_activity?.map((activity, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="font-medium text-gray-800 text-sm">{activity.title}</div>
-                    <div className="text-xs text-gray-500">by {activity.author_name}</div>
-                    <div className="text-xs text-purple-600 mt-1">
+                  <div key={index} className={`p-3 ${theme.background} rounded-lg ${theme.border}`}>
+                    <div className={`font-medium ${theme.text} text-sm`}>{activity.title}</div>
+                    <div className={`text-xs ${theme.textMuted}`}>by {activity.author_name}</div>
+                    <div className={`text-xs ${theme.primary} mt-1`}>
                       {new Date(activity.finish_date.toString().includes('-') ? activity.finish_date : parseInt(activity.finish_date)).toLocaleDateString()}
                     </div>
                   </div>
                 )) || (
-                  <div className="text-center text-gray-500 py-8">
-                    <BookOpenIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <div className={`text-center ${theme.textMuted} py-8`}>
+                    <BookOpenIcon className={`h-8 w-8 mx-auto mb-2 ${theme.textMuted}`} />
                     <p>No recent activity</p>
                   </div>
                 )}

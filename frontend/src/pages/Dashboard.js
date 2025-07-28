@@ -12,20 +12,23 @@ import {
 } from '@heroicons/react/24/outline';
 import { statsApi } from '../services/api';
 import { format } from 'date-fns';
+import { useTheme } from '../contexts/ThemeContext';
 
 const StatCard = ({ title, value, icon: Icon, color = 'indigo' }) => {
+  const { theme } = useTheme();
+  
   const colorClasses = {
-    indigo: 'bg-indigo-50 text-indigo-700',
-    green: 'bg-green-50 text-green-700',
-    red: 'bg-red-50 text-red-700',
-    yellow: 'bg-yellow-50 text-yellow-700',
+    indigo: `${theme.primaryBg} ${theme.primary}`,
+    green: `${theme.successBg} ${theme.success}`,
+    red: `${theme.errorBg} ${theme.error}`,
+    yellow: `${theme.warningBg} ${theme.warning}`,
     blue: 'bg-blue-50 text-blue-700',
-    purple: 'bg-purple-50 text-purple-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
+    purple: `${theme.primaryBg} ${theme.primary}`,
+    emerald: `${theme.successBg} ${theme.success}`,
   };
 
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className={`${theme.card} overflow-hidden ${theme.shadow} rounded-lg ${theme.border}`}>
       <div className="p-5">
         <div className="flex items-center">
           <div className="flex-shrink-0">
@@ -33,8 +36,8 @@ const StatCard = ({ title, value, icon: Icon, color = 'indigo' }) => {
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
-              <dd className="text-2xl font-semibold text-gray-900">{value}</dd>
+              <dt className={`text-sm font-medium ${theme.textMuted} truncate`}>{title}</dt>
+              <dd className={`text-2xl font-semibold ${theme.text}`}>{value}</dd>
             </dl>
           </div>
         </div>
@@ -44,18 +47,20 @@ const StatCard = ({ title, value, icon: Icon, color = 'indigo' }) => {
 };
 
 const RecentActivity = ({ activities = [] }) => {
+  const { theme } = useTheme();
+  
   if (activities.length === 0) {
     return (
       <div className="text-center py-8">
-        <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <p className="mt-2 text-sm text-gray-500">No recent activity</p>
+        <BookOpenIcon className={`mx-auto h-12 w-12 ${theme.textMuted}`} />
+        <p className={`mt-2 text-sm ${theme.textMuted}`}>No recent activity</p>
       </div>
     );
   }
 
   return (
     <div className="flow-root">
-      <ul role="list" className="-my-5 divide-y divide-gray-200">
+      <ul role="list" className={`-my-5 divide-y ${theme.border}`}>
         {activities.map((activity, index) => (
           <li key={index} className="py-4">
             <div className="flex items-center space-x-4">
@@ -63,14 +68,14 @@ const RecentActivity = ({ activities = [] }) => {
                 <CheckCircleIcon className="h-8 w-8 text-green-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className={`text-sm font-medium ${theme.text} truncate`}>
                   {activity.title}
                 </p>
-                <p className="text-sm text-gray-500 truncate">
+                <p className={`text-sm ${theme.textMuted} truncate`}>
                   by {activity.author_name || 'Unknown Author'}
                 </p>
               </div>
-              <div className="flex-shrink-0 text-sm text-gray-500">
+              <div className={`flex-shrink-0 text-sm ${theme.textMuted}`}>
                 {format(new Date(activity.finish_date), 'MMM d, yyyy')}
               </div>
             </div>
@@ -83,6 +88,7 @@ const RecentActivity = ({ activities = [] }) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['stats'],
     queryFn: () => statsApi.getOverview().then(res => res.data),
@@ -190,9 +196,9 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white shadow rounded-lg">
+      <div className={`${theme.card} ${theme.shadow} rounded-lg ${theme.border}`}>
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+          <h3 className={`text-lg leading-6 font-medium ${theme.text} mb-4`}>
             Recent Reading Activity
           </h3>
           <RecentActivity activities={recent_activity} />
@@ -200,36 +206,36 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
+      <div className={`${theme.card} ${theme.shadow} rounded-lg ${theme.border}`}>
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+          <h3 className={`text-lg leading-6 font-medium ${theme.text} mb-4`}>
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <button 
               onClick={handleAddNewBook}
-              className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              className={`relative block w-full rounded-lg border-2 border-dashed ${theme.border} p-6 text-center ${theme.borderHover} focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors`}
             >
-              <BookOpenIcon className="mx-auto h-8 w-8 text-gray-400" />
-              <span className="mt-2 block text-sm font-medium text-gray-900">
+              <BookOpenIcon className={`mx-auto h-8 w-8 ${theme.textMuted}`} />
+              <span className={`mt-2 block text-sm font-medium ${theme.text}`}>
                 Add New Book
               </span>
             </button>
             <button 
               onClick={handleMarkBookAsRead}
-              className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              className={`relative block w-full rounded-lg border-2 border-dashed ${theme.border} p-6 text-center ${theme.borderHover} focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors`}
             >
-              <CheckCircleIcon className="mx-auto h-8 w-8 text-gray-400" />
-              <span className="mt-2 block text-sm font-medium text-gray-900">
+              <CheckCircleIcon className={`mx-auto h-8 w-8 ${theme.textMuted}`} />
+              <span className={`mt-2 block text-sm font-medium ${theme.text}`}>
                 Mark Book as Read
               </span>
             </button>
             <button 
               onClick={handleViewWishlist}
-              className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              className={`relative block w-full rounded-lg border-2 border-dashed ${theme.border} p-6 text-center ${theme.borderHover} focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors`}
             >
-              <HeartIcon className="mx-auto h-8 w-8 text-gray-400" />
-              <span className="mt-2 block text-sm font-medium text-gray-900">
+              <HeartIcon className={`mx-auto h-8 w-8 ${theme.textMuted}`} />
+              <span className={`mt-2 block text-sm font-medium ${theme.text}`}>
                 View Wishlist
               </span>
             </button>
